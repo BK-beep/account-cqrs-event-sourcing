@@ -2,20 +2,23 @@ package ma.enset.comptecqrses.commands.aggregates;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import ma.enset.comptecqrses.common_api.AccountStatus;
+import ma.enset.comptecqrses.common_api.enums.AccountStatus;
 import ma.enset.comptecqrses.common_api.commands.CreateAccountCommand;
 import ma.enset.comptecqrses.common_api.commands.CreditAccountCommand;
-import ma.enset.comptecqrses.common_api.dtos.CreateAccountDto;
-import ma.enset.comptecqrses.common_api.dtos.CreditAccountDto;
+import ma.enset.comptecqrses.common_api.commands.DebitAccountCommand;
 import ma.enset.comptecqrses.common_api.events.AccountActivatedEvent;
 import ma.enset.comptecqrses.common_api.events.AccountCreatedEvent;
 import ma.enset.comptecqrses.common_api.events.AccountCreditedEvent;
+import ma.enset.comptecqrses.common_api.events.AccountDebitedEvent;
 import ma.enset.comptecqrses.common_api.exceptions.AmountNegativeException;
+import ma.enset.comptecqrses.common_api.exceptions.BalanceNotSufficientException;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.modelling.command.AggregateLifecycle;
 import org.axonframework.spring.stereotype.Aggregate;
+
+import java.util.Date;
 
 @Aggregate @NoArgsConstructor @AllArgsConstructor
 public class AccountAggregate {
@@ -32,7 +35,8 @@ public class AccountAggregate {
         AggregateLifecycle.apply(new AccountCreatedEvent(
                 command.getId(),
                 command.getInitialBalance(),
-                command.getCurrency()
+                command.getCurrency(),
+                AccountStatus.CREATED
         ));
 
     }
@@ -66,5 +70,20 @@ public class AccountAggregate {
     @EventSourcingHandler
     public void on(AccountCreditedEvent event){
         this.balance+=event.getAmount();
+    }
+    @CommandHandler
+    public void handle(DebitAccountCommand command){
+        if (command.getAmount()<0) throw new AmountNegativeException("Amount should not be negative");
+        if (command.getAmount()>this.balance) throw new BalanceNotSufficientException("Amount insufficient");
+        AggregateLifecycle.apply(new AccountDebitedEvent(
+                command.getId(),
+                command.getAmount(),
+                command.getCurrency(),
+                new Date()
+        ));
+    }
+    @EventSourcingHandler
+    public void on(AccountDebitedEvent event){
+        this.balance-=event.getAmount();
     }
 }

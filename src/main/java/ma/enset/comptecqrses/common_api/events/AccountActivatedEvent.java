@@ -1,7 +1,7 @@
 package ma.enset.comptecqrses.common_api.events;
 
 import lombok.Getter;
-import ma.enset.comptecqrses.common_api.AccountStatus;
+import ma.enset.comptecqrses.common_api.enums.AccountStatus;
 
 public class AccountActivatedEvent extends BaseEvent<String>{
 

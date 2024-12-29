@@ -5,8 +5,10 @@ import lombok.RequiredArgsConstructor;
 import ma.enset.comptecqrses.commands.aggregates.AccountAggregate;
 import ma.enset.comptecqrses.common_api.commands.CreateAccountCommand;
 import ma.enset.comptecqrses.common_api.commands.CreditAccountCommand;
+import ma.enset.comptecqrses.common_api.commands.DebitAccountCommand;
 import ma.enset.comptecqrses.common_api.dtos.CreateAccountDto;
 import ma.enset.comptecqrses.common_api.dtos.CreditAccountDto;
+import ma.enset.comptecqrses.common_api.dtos.DebitAccountDto;
 import org.axonframework.commandhandling.CommandBus;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.eventsourcing.eventstore.EventStore;
@@ -40,6 +42,16 @@ public class AccountCommandController {
     public CompletableFuture<String> creditAccount(@RequestBody CreditAccountDto request){
         CompletableFuture<String > response = commandGateway
                 .send(new CreditAccountCommand(
+                        request.getAccountId(),
+                        request.getAmount(),
+                        request.getCurrency()
+                ));
+        return response;
+    }
+    @PutMapping("/debit")
+    public CompletableFuture<String> debitAccount(@RequestBody DebitAccountDto request){
+        CompletableFuture<String > response = commandGateway
+                .send(new DebitAccountCommand(
                         request.getAccountId(),
                         request.getAmount(),
                         request.getCurrency()
